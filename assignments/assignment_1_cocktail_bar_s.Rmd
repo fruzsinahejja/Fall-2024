@@ -85,7 +85,7 @@ What are the 10 most frequently used ingredients? If there are ties, you can lis
 top_ingredients <- cleaned_cocktail %>%
   count(ingredients_no_quant) %>%
   arrange(desc(n))
-head(top_ingredients, n = 10)
+  head(top_ingredients, n = 10)
 ```
 
 
@@ -94,13 +94,25 @@ head(top_ingredients, n = 10)
 Count the number of ingredients and filter all the cocktails that has that many.
 
 ```{r}
+most_ingredients <- cleaned_cocktail %>%
+  count(name) %>%
+  arrange(desc(n)) %>%
+  slice(1)
 
+cocktails_most_ingredients <- cleaned_cocktail %>%
+  count(name) %>%
+  filter(n >= 6)
+print(cocktails_most_ingredients)
 ```
 
 ## 7. How many ingredients appear in only one cocktail (rare ingredient)?
 
 ```{r}
-
+rare_ingredient <- cleaned_cocktail %>%
+  count(ingredients_no_quant) %>%
+  filter(n == 1) %>%
+  select(ingredients_no_quant)
+print(rare_ingredient)
 ```
 
 ## 8. Which cocktail has an ingredient that is only used in one cocktail?
