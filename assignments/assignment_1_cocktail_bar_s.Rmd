@@ -82,10 +82,10 @@ length(ingredient_list)
 What are the 10 most frequently used ingredients? If there are ties, you can list more than 10.
 
 ```{r}
-top_ingredients <- cleaned_cocktail %>%
+num_of_ingredients <- cleaned_cocktail %>%
   count(ingredients_no_quant) %>%
   arrange(desc(n))
-  head(top_ingredients, n = 10)
+head(num_of_ingredients, n = 10)
 ```
 
 
@@ -111,8 +111,9 @@ print(cocktails_most_ingredients)
 rare_ingredient <- cleaned_cocktail %>%
   count(ingredients_no_quant) %>%
   filter(n == 1) %>%
-  select(ingredients_no_quant)
+  pull(ingredients_no_quant)
 print(rare_ingredient)
+
 ```
 
 ## 8. Which cocktail has an ingredient that is only used in one cocktail?
@@ -124,7 +125,7 @@ print(rare_ingredient)
 ## 9. What are the cocktails without rare ingredients?
 
 ```{r}
-  
+
 ```
 
 ## 10. Create a cheat sheet for the bartender!
