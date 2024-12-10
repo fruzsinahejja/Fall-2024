@@ -41,6 +41,7 @@ top_15_peaks <- expeditions_raw %>%
   mutate(top_15_peaks = fct_drop(top_15_peaks)) %>%
   filter(!is.na(peak_name)) %>%
   count(top_15_peaks)
+print(top_15_peaks)
 ```
 
 ## Task 2: PhDs awarded
