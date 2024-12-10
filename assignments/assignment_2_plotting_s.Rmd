@@ -31,7 +31,16 @@ The 2020-09-22 TidyTueday datasets are about climbing expeditions. From the thre
 -   The bar colors use the viridis palette and light theme.
 
 ```{r}
+expeditions_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/refs/heads/main/data/2020/2020-09-22/expeditions.csv")
+```
 
+```{r}
+top_15_peaks <- expeditions_raw %>%
+  mutate(top_15_peaks = fct_lump_n(peak_name, n=15)) %>%
+  filter(top_15_peaks != "Other") %>%
+  mutate(top_15_peaks = fct_drop(top_15_peaks)) %>%
+  filter(!is.na(peak_name)) %>%
+  count(top_15_peaks)
 ```
 
 ## Task 2: PhDs awarded
