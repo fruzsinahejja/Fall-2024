@@ -35,13 +35,16 @@ expeditions_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/t
 ```
 
 ```{r}
-top_15_peaks <- expeditions_raw %>%
-  mutate(top_15_peaks = fct_lump_n(peak_name, n=15)) %>%
-  filter(top_15_peaks != "Other") %>%
-  mutate(top_15_peaks = fct_drop(top_15_peaks)) %>%
-  filter(!is.na(peak_name)) %>%
-  count(top_15_peaks)
-print(top_15_peaks)
+expeditions_raw %>%
+  mutate(peak_name = fct_lump(peak_name, n = 15),
+         peak_name = fct_reorder(peak_name, expedition_id)) %>%
+  filter(!is.na(peak_name) & peak_name != "Other") %>%
+  ggplot(aes(peak_name, expedition_id, fill = season)) + 
+  geom_col() +
+  labs(title = "The 15 most popular peaks stacked by season of expedition",
+       x = "Number of expeditions", y = NULL) +
+  coord_flip()
+
 ```
 
 ## Task 2: PhDs awarded
