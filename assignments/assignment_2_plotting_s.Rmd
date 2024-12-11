@@ -101,6 +101,23 @@ commute <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesd
 ```
 
 ```{r}
+commute %>%
+  filter(!is.na(state) & !is.na(n)) %>%
+  group_by(state, state_region) %>%
+  summarize(walk_total = sum(n[mode == "Bicycle"], na.rm = TRUE),
+            bike_total = sum(n[mode == "Walk"], na.rm = TRUE)) %>%
+  ggplot(aes(x = walk_total, y = bike_total, color = state_region)) +
+  geom_point(size = 2) +
+  scale_x_log10(labels = scales::comma_format()) +
+  scale_y_log10(labels = scales::comma_format()) +
+  labs(title = "Number of people walking vs biking to work in each USA state",
+       x = "Number of ppl walking to work (log N)",
+       y = "Number of ppl biking to work (log N)",
+       color = "State Region") +
+  geom_text(aes(label = state), size = 2, vjust = -0.5)
+  theme_light()
+  
 
+  
 ```
 
