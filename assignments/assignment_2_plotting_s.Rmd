@@ -20,7 +20,8 @@ You will have to create 3 plots based on the datasets and instructions detailed 
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(tidytuesdayR)
-```
+
+`````````
 
 ## Task 1: Climbing expeditions
 
@@ -36,14 +37,23 @@ expeditions_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/t
 
 ```{r}
 expeditions_raw %>%
-  mutate(peak_name = fct_lump(peak_name, n = 15),
-         peak_name = fct_reorder(peak_name, expedition_id)) %>%
+  mutate(peak_name = fct_lump(peak_name, n = 15)) %>%
   filter(!is.na(peak_name) & peak_name != "Other") %>%
-  ggplot(aes(peak_name, expedition_id, fill = season)) + 
+  group_by(peak_name, season) %>%
+  summarize(expedition_count = n(), .groups = "drop") %>%
+  group_by(peak_name) %>%
+  mutate(total_expeditions = sum(expedition_count)) %>%
+  ungroup() %>%
+  mutate(peak_name = fct_reorder(peak_name, total_expeditions, .desc = FALSE)) %>% 
+  ggplot(aes(peak_name, expedition_count, fill = season)) + 
   geom_col() +
   labs(title = "The 15 most popular peaks stacked by season of expedition",
-       x = "Number of expeditions", y = NULL) +
+       y = "Number of expeditions", x = NULL) +
+  theme_light() +
+  theme(legend.position = "bottom") +
+  scale_color_viridis_b() +
   coord_flip()
+
 
 ```
 
@@ -62,6 +72,17 @@ phd_by_field <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidy
 ```
 
 ```{r}
+phd_by_field %>%
+  filter(!is.na(broad_field) & !is.na(year) & !is.na(n_phds)) %>%
+  group_by(broad_field, year) %>%
+  summarize(n_phds = sum(n_phds)) %>%
+  ggplot(aes(x = year, y = n_phds, color = broad_field)) +
+  geom_line(linewidth = 1.2) +
+  scale_x_continuous(breaks = scales::pretty_breaks()) +
+  scale_y_continuous(labels = scales::comma_format()) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title = "Number of awarded Ph.D.-s in the US by year", x = NULL, y = NULL) +
+  theme_minimal()
 
 ```
 
