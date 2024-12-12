@@ -59,7 +59,10 @@ In your discussion of the findings, briefly interpret the results of the above a
 Read the dataset used in this assignment. Pay attention to the extension of the datafile.
 
 ```{r}
-
+library(tidyverse)  
+library(readxl)
+assignment_3_dataset_ <- read_excel("data/assignment_3_dataset_.xlsx")
+View(assignment_3_dataset_)
 ```
 
 ## Data and model diagnostics 
@@ -69,6 +72,23 @@ Read the dataset used in this assignment. Pay attention to the extension of the 
 Run an exploratory data analysis (EDA) to investigate the dataset.
 
 ```{r}
+#The mean age of the participants
+ggplot(assignment_3_dataset_, aes(x = age))+
+  geom_histogram(binwidth = 2, fill = "steelblue", color = "white") +
+  geom_vline(aes(xintercept = mean(age)),
+             color = "red", linetype = "dashed", size =1) +
+  theme_minimal()
+
+#Gender distribution
+ggplot(assignment_3_dataset_, aes(x = sex, fill = sex)) +
+  geom_bar() +
+  theme_minimal()
+
+#Age vs STAI
+ggplot(assignment_3_dataset_, aes(x = age, y = STAI_trait)) +
+  geom_point(alpha = 0.6, color = "steelblue") +
+  geom_smooth(method = "lm", color = "red") +
+  theme_minimal()
 
 ```
 
@@ -77,6 +97,7 @@ Run an exploratory data analysis (EDA) to investigate the dataset.
 If you find values in the dataset during the EDA, that are not correct based on the provided descriptions of the variables of the dataset please correct them here.
 
 ```{r}
+
 
 ```
 
