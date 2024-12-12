@@ -9,6 +9,9 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(haven)
+library(lme4)
+library(MuMIn)
 ```
 
 # Introduction
@@ -58,7 +61,11 @@ Compare the model coefficients and the confidence intervals observed in this ass
 Read the datasets used in this assignment. Pay attention to the extensions of the datafiles.
 
 ```{r}
+dataset_A <- read_sav("data/assignment_4_dataset_A_.sav")
+View(dataset_A)
 
+dataset_B <- read_sav("data/assignment_4_dataset_B_.sav")
+View(dataset_B)
 ```
 
 ## Exploratory data analysis
@@ -66,6 +73,32 @@ Read the datasets used in this assignment. Pay attention to the extensions of th
 Run an exploratory data analysis (EDA) to investigate the dataset.
 
 ```{r}
+summary(dataset_A)
+summary(dataset_B)
+
+table(dataset_A$sex)
+table(dataset_B$sex)
+
+table(dataset_A$hospital)
+table(dataset_B$hospital)
+
+table(dataset_A$pain)
+table(dataset_B$pain)
+
+#Exploring dataset_A based on the age variable
+ggplot(dataset_A, aes(x = age)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(title = "Age distribution in dataset_A", x = "Age", y = "Frequency")
+
+#Exploring dataset_B based on the age variable
+ggplot(dataset_B, aes(x = age)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(title = "Age distribution in dataset_B", x = "Age", y = "Frequency")
+
+#Exploring outliers in dataset_A based on the age variable
+ggplot(dataset_A, aes(x = age)) +
+  geom_boxplot(fill = "steelblue", color = "white") 
+  
 
 ```
 
@@ -74,6 +107,64 @@ Run an exploratory data analysis (EDA) to investigate the dataset.
 If you find values in the dataset during the EDA, that are not correct based on the provided descriptions of the variables of the dataset please correct them here.
 
 ```{r}
+#Recoding the factor levels in sex variable in 'dataset_A'
+dataset_A <- dataset_A %>%
+  mutate(sex = fct_recode(sex, "male" = "Male")) %>%
+  mutate(sex = droplevels(sex))
 
+#Recoding the sex values so that they are numeric in both datasets
+dataset_A$sex <- as.numeric(factor(dataset_A$sex, levels = c("male", "female")))
+
+table(dataset_A$sex)
+
+dataset_B$sex <- as.numeric(factor(dataset_B$sex, levels = c("male", "female")))
+
+table(dataset_B$sex)
+```
+
+
+##Fit a linear mixed model to estimate postoperative pain on datafile A. You should use the same fixed effect predictors as you used in your final model in the 3 assignment. Importantly, the model has to account for the clustering of the data in different hospital sites. We have no reason to assume that the effects of the different predictors would be different in the different hospitals, so fit a random intercept model including the random intercept of hospital-ID. Once the model is built, note the model coefficients and the confidence intervals of the coefficients for all fixed effect predictors, and compare them to the ones obtained in the 3 assignment.
+```{r}
+model_A <- lmer(pain ~ age +
+                  sex +
+                  STAI_trait +
+                  pain_cat +
+                  mindfulness +
+                  cortisol_serum +
+                  (1 | hospital), data = dataset_A)
+summary(model_A)
+#The model coefficients and confidence intervals of the coefficients for all fixed effect predictors in a table
+confint(model_A)
+
+```
+
+#Also, compute the variance explained by the fixed effect predictors using marginal R^2^, and the variance explained by the fixed and random effect terms combined using conditional R^2^. Now use the model coefficients obtained on data file A to predict pain in datafile B.
+```{r}
+#Computing variance explained by the fixed effect predictors using marginal R^2
+r_squaredA <- r.squaredGLMM(model_A)
+r_squaredA
+
+#Using model coefficients obtained on data file A to predict pain in datafile B
+coefficients <- fixef(model_A)
+print(coefficients)
+
+dataset_B$predicted_pain <- coefficients[1] + 
+  coefficients[2] * dataset_B$age +
+  coefficients[3] * dataset_B$sex +
+  coefficients[4] * dataset_B$STAI_trait +
+  coefficients[5] * dataset_B$pain_cat +
+  coefficients[6] * dataset_B$mindfulness +
+  coefficients[7] * dataset_B$cortisol_serum
+
+head(dataset_B$predicted_pain)
+```
+
+#Now compute the variance explained by the model on datafile B. You can do this by using the formula: __1 - (RSS / TSS) = R^2__. Compare this R^2^ to the marginal and conditional R^2^ values computed for the model on datafile A. 
+```{r}
+#Computing the variance explained by the model on datafile B
+RSS <- sum((dataset_B$pain - dataset_B$predicted_pain)^2)
+TSS <- sum((dataset_B$pain - mean(dataset_B$pain))^2)
+R_squaredB <- 1 - (RSS / TSS)
+R_squaredB
 ```
 
