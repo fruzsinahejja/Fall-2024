@@ -89,22 +89,38 @@ ggplot(assignment_3_dataset_, aes(x = sex, fill = sex)) +
 
 #STAI
 summary(assignment_3_dataset_$STAI_trait)
-
-ggplot(assignment_3_dataset_, aes(x = STAI_trait)) +
-  geom_histogram(binwidth = 2, fill = "steelblue", color = "white") +
-  geom_vline(aes(xintercept = mean(STAI_trait)),
-             color = "red", linetype = "dashed", size = 1) +
+ggplot(assignment_3_dataset_, aes(x ="All participants", y = STAI_trait)) +
+  geom_boxplot(fill = "steelblue", alpha = 0., width = 0.5) +
+  geom_jitter(width = 0.2, alpha = 0.5, color = "darkblue", size = 2) +
   theme_minimal()
 
 #Mindfulness
 summary(assignment_3_dataset_$mindfulness)
+ggplot(assignment_3_dataset_, aes(x ="All participants", y = mindfulness)) +
+  geom_boxplot(fill = "steelblue", alpha = 0., width = 0.5) +
+  geom_jitter(width = 0.2, alpha = 0.5, color = "darkblue", size = 2) +
+  theme_minimal()
 
 #Pain catastrophizing
 summary(assignment_3_dataset_$pain_cat)
 
+ggplot(assignment_3_dataset_, aes(x ="All participants", y = pain_cat)) +
+  geom_boxplot(fill = "steelblue", alpha = 0., width = 0.5) +
+  geom_jitter(width = 0.2, alpha = 0.5, color = "darkblue", size = 2) +
+  theme_minimal()
+
 #Cortisol measures
 summary(assignment_3_dataset_$cortisol_saliva)
+ggplot(assignment_3_dataset_, aes(x ="All participants", y = cortisol_saliva)) +
+  geom_boxplot(fill = "steelblue", alpha = 0., width = 0.5) +
+  geom_jitter(width = 0.2, alpha = 0.5, color = "darkblue", size = 2) +
+  theme_minimal()
+
 summary(assignment_3_dataset_$cortisol_serum)
+ggplot(assignment_3_dataset_, aes(x ="All participants", y = cortisol_serum)) +
+  geom_boxplot(fill = "steelblue", alpha = 0., width = 0.5) +
+  geom_jitter(width = 0.2, alpha = 0.5, color = "darkblue", size = 2) +
+  theme_minimal()
 
 
 #Pain
@@ -132,6 +148,11 @@ table(assignment_3_dataset_$sex)
 #Removing outlier from pain variable
 assignment_3_dataset_ <- assignment_3_dataset_ %>%
   filter(pain < 10)
+
+#Removing outlier from pain_cat variable
+assignment_3_dataset_ <- assignment_3_dataset_ %>%
+  filter(pain_cat <= 40 & pain_cat >= 20)
+
 
 ```
 
@@ -175,16 +196,7 @@ qqnorm(residuals(cmplx_model))
 Check the linearity assumption.
 
 ```{r}
-linearity <- data.frame(
-  fitted = fitted(cmplx_model),
-  residuals = resid(cmplx_model))
-
-ggplot(linearity, aes(x = fitted, y = residuals)) +
-  geom_point() +
-  geom_smooth(method = "loess", se = FALSE) +
-  theme_minimal()
-
-
+plot(cmplx_model, 1)
 ```
 
 Check the homoscedasticty assumption (homogeneity of variance).
@@ -230,7 +242,8 @@ summary(updated_model)
 #### Checking outliers of the updated model
 
 ```{r}
-
+cooksd_updated <- cooks.distance(updated_model)
+plot(cooksd_updated, pch = 19, frame = FALSE, main = "Influential outliers by Cook's distance")
 ```
 
 #### Checking assumptions of the updated model
@@ -238,13 +251,14 @@ summary(updated_model)
 Normality assumption
 
 ```{r}
+qqnorm(residuals(updated_model))
 
 ```
 
 Linearity assumption
 
 ```{r}
-
+plot(updated_model, 1)
 ```
 
 Homoscedasticty assumption (homogeneity of variance)
@@ -256,7 +270,7 @@ Homoscedasticty assumption (homogeneity of variance)
 Multicollinearity assumption
 
 ```{r}
-
+vif(updated_model)
 ```
 
 ## Model comparison
@@ -264,18 +278,49 @@ Multicollinearity assumption
 Create the simple model and get the results of the model that needs to be reported based on the What to report section.
 
 ```{r}
+simple_model <- lm(pain ~
+                     age +
+                     sex,
+                   data = assignment_3_dataset_)
+summary(simple_model)
+
+#The model explains 8.95% of the variance in pain (R2 = 0.089). The age variable has a significant negative relationship with pain (B = -0.084)
+#The model is significant (p < 0.05, F = 7.373).
+
+#Table summarizing the results of the simple model
+simple_model_results <- data.frame(unstandardized = coef(simple_model),
+                                     conf_int = confint(simple_model),
+                                     standardized = coef(simple_model) / sd(assignment_3_dataset_$pain), p_value = summary(simple_model)$coefficients[,4])
+simple_model_results
 
 ```
 
 Create the more complex model based on the results of the model diagnostics. Also, get the results that needs to be reported based on the What to report section.
 
 ```{r}
+summary(updated_model)
+   
+#The updated model explains 258.41% of the variance in pain (R2 = 0.284). The pain_cat (B = 0.070, p < 0.05) and cortisol_serum (B = 0.536, p < 0.05) variables have a significant positive relationship with pain.  
+#The model is significant (p < 0.05, F = 9.658).
 
+#Table summarizing the results of the updated model
+updated_model_results <- data.frame(unstandardized = coef(updated_model),
+                                     conf_int = confint(updated_model),
+                                     standardized = coef(updated_model) / sd(assignment_3_dataset_$pain), p_value = summary(updated_model)$coefficients[,4])
+updated_model_results
 ```
 
 Compare the two models.
 
 ```{r}
+anova(simple_model, updated_model)
 
+#Based on the comparison, the updated model provides better explanation of the variability in pain (F = 9.923, p < 0.01).The updated model also has a better fit based on RSS value (231.61).
+
+AIC(simple_model, updated_model)
+
+#Based on the AIC value, the updated model has a better fit (AIC = 513.629).
 ```
 
+#Discussion
+Based on the findings, the updated model provides a better explanation of the variability in pain compared to the simple model. The updated model includes the extent of pain catastrophizing and cortisol levels, which have a significant positive relationship with pain. The updated model suggests that including psychological and hormone measures gave a better understanding of postoperative pain in addition to demographic variables.
