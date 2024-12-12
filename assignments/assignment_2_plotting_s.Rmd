@@ -105,7 +105,7 @@ commute %>%
   filter(!is.na(state) & !is.na(n)) %>%
   group_by(state, state_region) %>%
   summarize(walk_total = sum(n[mode == "Bicycle"], na.rm = TRUE),
-            bike_total = sum(n[mode == "Walk"], na.rm = TRUE)) %>%
+            bike_total = sum(n[mode == "Walk"], na.rm = TRUE), .groups = "drop") %>%
   ggplot(aes(x = walk_total, y = bike_total, color = state_region)) +
   geom_point(size = 2) +
   scale_x_log10(labels = scales::comma_format()) +
@@ -114,10 +114,8 @@ commute %>%
        x = "Number of ppl walking to work (log N)",
        y = "Number of ppl biking to work (log N)",
        color = "State Region") +
-  geom_text(aes(label = state), size = 2, vjust = -0.5)
+  geom_text(aes(label = state), size = 2, vjust = -0.5) +
   theme_light()
-  
 
-  
 ```
 
