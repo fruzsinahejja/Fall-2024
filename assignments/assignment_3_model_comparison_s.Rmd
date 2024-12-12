@@ -59,6 +59,7 @@ In your discussion of the findings, briefly interpret the results of the above a
 Read the dataset used in this assignment. Pay attention to the extension of the datafile.
 
 ```{r}
+library(car)
 library(tidyverse)  
 library(readxl)
 assignment_3_dataset_ <- read_excel("data/assignment_3_dataset_.xlsx")
@@ -80,16 +81,39 @@ ggplot(assignment_3_dataset_, aes(x = age))+
   theme_minimal()
 
 #Gender distribution
+table(assignment_3_dataset_$sex)
+
 ggplot(assignment_3_dataset_, aes(x = sex, fill = sex)) +
   geom_bar() +
   theme_minimal()
 
-#Age vs STAI
-ggplot(assignment_3_dataset_, aes(x = age, y = STAI_trait)) +
-  geom_point(alpha = 0.6, color = "steelblue") +
-  geom_smooth(method = "lm", color = "red") +
+#STAI
+summary(assignment_3_dataset_$STAI_trait)
+
+ggplot(assignment_3_dataset_, aes(x = STAI_trait)) +
+  geom_histogram(binwidth = 2, fill = "steelblue", color = "white") +
+  geom_vline(aes(xintercept = mean(STAI_trait)),
+             color = "red", linetype = "dashed", size = 1) +
   theme_minimal()
 
+#Mindfulness
+summary(assignment_3_dataset_$mindfulness)
+
+#Pain catastrophizing
+summary(assignment_3_dataset_$pain_cat)
+
+#Cortisol measures
+summary(assignment_3_dataset_$cortisol_saliva)
+summary(assignment_3_dataset_$cortisol_serum)
+
+
+#Pain
+summary(assignment_3_dataset_$pain)
+
+ggplot(assignment_3_dataset_, aes(x ="All participants", y = pain)) +
+  geom_boxplot(fill = "steelblue", alpha = 0., width = 0.5) +
+  geom_jitter(width = 0.2, alpha = 0.5, color = "darkblue", size = 2) +
+  theme_minimal()
 ```
 
 #### Correct coding errors
@@ -98,6 +122,16 @@ If you find values in the dataset during the EDA, that are not correct based on 
 
 ```{r}
 
+#Recoding the woman value in sex variable, so it can count as female
+assignment_3_dataset_ <- assignment_3_dataset_ %>%
+  mutate(sex = fct_recode(sex, "woman" = "female")) %>%
+  mutate(sex = droplevels(sex))
+
+table(assignment_3_dataset_$sex)
+
+#Removing outlier from pain variable
+assignment_3_dataset_ <- assignment_3_dataset_ %>%
+  filter(pain < 10)
 
 ```
 
@@ -107,7 +141,16 @@ If you find values in the dataset during the EDA, that are not correct based on 
 In order to test the more complex model for outliers and to test the assumptions first build the model.
 
 ```{r}
+cmplx_model <- lm(pain ~ age +
+                    sex +
+                    STAI_trait +
+                    pain_cat +
+                    mindfulness +
+                    cortisol_serum +
+                    cortisol_saliva,
+                  data = assignment_3_dataset_)
 
+summary(cmplx_model)
 ```
 
 #### Checking for influential outliers
@@ -115,7 +158,8 @@ In order to test the more complex model for outliers and to test the assumptions
 Check for outlier values in the model.
 
 ```{r}
-
+cooksd <- cooks.distance(cmplx_model)
+plot(cooksd, pch = 19, frame = FALSE, main = "Influential outliers by Cook's distance")
 ```
 
 #### Checking assumptions
@@ -123,18 +167,34 @@ Check for outlier values in the model.
 Check the normality assumption.
 
 ```{r}
+qqnorm(residuals(cmplx_model))
 
+#Based on the qqplot the residuals are normally distributed
 ```
 
 Check the linearity assumption.
 
 ```{r}
+linearity <- data.frame(
+  fitted = fitted(cmplx_model),
+  residuals = resid(cmplx_model))
+
+ggplot(linearity, aes(x = fitted, y = residuals)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE) +
+  theme_minimal()
+
 
 ```
 
 Check the homoscedasticty assumption (homogeneity of variance).
 
 ```{r}
+ggplot(linearity, aes(x = fitted, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  geom_smooth(method = "loess", se = FALSE) +
+  theme_minimal()
 
 ```
 
@@ -147,7 +207,8 @@ https://statisticalhorizons.com/multicollinearity
 http://blog.minitab.com/blog/understanding-statistics/handling-multicollinearity-in-regression-analysis
 
 ```{r}
-
+vif(cmplx_model)
+#Based on the VIF values there is multicollinearity in the model (chortisol_serum and cortisol_saliva)
 ```
 
 ### Making decision based on model diagnostics
@@ -155,7 +216,15 @@ http://blog.minitab.com/blog/understanding-statistics/handling-multicollinearity
 If based on the assumption tests you decide to drop a predictor variable you should do that here. Create your updated model.
 
 ```{r}
+updated_model <- lm(pain ~ age +
+                    sex +
+                    STAI_trait +
+                    pain_cat +
+                    mindfulness +
+                    cortisol_serum,
+                  data = assignment_3_dataset_)
 
+summary(updated_model)
 ```
 
 #### Checking outliers of the updated model
